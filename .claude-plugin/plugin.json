@@ -1,6 +1,6 @@
 {
   "name": "design-council",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Multi-agent design council: discovery, structurally different concepts as live HTML previews, screenshot-based critique, debate, director synthesis, and optional implementation in the current web or mobile repo.",
   "author": {
     "name": "Masoud Parsanejad"
