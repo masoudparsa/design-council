@@ -33,11 +33,11 @@ Supported platforms for implementation: **Flutter**, **React / Next / Vue / Nuxt
 1. **Frame** — decision brief, repo scan (platform, design system, l10n, RTL), delivery question (≤ 3 questions total)
 2. **Discovery** — independent analysis by each member
 3. **Direction** — the Director writes a design brief and structurally different concept briefs
-4. **Make + render** — the UI Maker builds each concept as a self-contained HTML file and reviews its own render; Playwright captures full-res shots and a contact sheet per concept
+4. **Make + render** — the UI Maker builds each concept at *concept fidelity* as a self-contained HTML file and reviews its own render; one Playwright launch captures full-res shots and a contact sheet per concept
 5. **Critique** — members review the screenshots in a strict issue format: problem · why · impact · severity · fix
 6. **Debate** — only disputes that change the direction or a blocker
 7. **Synthesis + stress test** — chosen direction or hybrid, decision records, Refine Brief
-8. **Refine + verify** — the Maker edits the chosen concept into the final preview; each Refine item is checked against the shots
+8. **Refine + verify** — the Maker edits the chosen concept into the final preview and raises it to *full fidelity* (every state, dark mode, every viewport); each Refine item is checked against the shots
 9. **Implement** — after you approve (Path A) or directly (Path B), followed by a real-screen critique of the implemented UI
 
 ## Members
@@ -70,16 +70,22 @@ Director, Maker, and Implementer never critique or debate.
 
 **Cut transport, never judgment.**
 
-Saved: agents receive file paths, not pasted content; outputs are compact issue rows with IDs; debates carry only the disputed rows; HTML is read only by roles that need it (Grep first); the final design is edited, not rewritten.
+- **Fidelity tiers** — two of three concepts are discarded, so concepts are built at *concept fidelity*: real content and full visual craft, but only `default` + the riskiest state, mobile + the primary other viewport, light theme. Only the chosen direction is raised to full fidelity.
+- **Maker budget** — starts from a shared scaffold (`base.html`: tokens, state/theme router, a11y base), writes the file once, edits by Grep + Edit instead of re-reading, one self-review pass.
+- **Batch rendering** — `render.cjs` takes every screenshot in one browser launch and flags failed, blank, and JS-erroring pages, so the orchestrator opens an image only when something is wrong.
+- **Narrow reads, own writes** — each Maker reads only its own concept brief; the Director writes `brief.md` and `report.md` itself instead of returning long text to be re-saved.
+- **Transport** — file paths instead of pasted content, compact issue rows, debates carry only disputed rows.
+- **`--lean`** (optional) — concept Makers on sonnet; Refine and Implementer stay on opus.
 
-Never cut: three concepts in standard/deep, full-resolution shots for visual-craft critics, the Maker's self-review, the critique round, and opus for Director, Maker, Creative, Red Team, and Implementer.
+Never cut: three concepts in standard/deep, full-resolution shots for visual-craft critics, the Maker's self-review, the critique round, a full-fidelity final, and opus for Director, Maker, Creative, Red Team, and Implementer.
 
 ## Output
 
 ```text
 design-council/<topic>/
-├── brief.md            # request, product context, design brief, concept briefs
-├── concepts/           # one self-contained HTML file per concept
+├── brief.md            # request, product context, design brief
+├── concepts/           # <id>.brief.md + <id>.html per concept
+├── jobs/               # render job files
 ├── shots/              # full-resolution screenshots (mobile, desktop, states, dark)
 ├── sheets/             # contact sheets for overview
 ├── final/preview.html  # refined final design
@@ -129,6 +135,7 @@ Command: `/design-council`
 | `quick` / `standard` / `deep` | mode (first word) |
 | `--preview` / `--code` | delivery path, skips the question |
 | `--from <path>` | use a Product Council report or product doc as context |
+| `--lean` | cheaper exploration: concept Makers on sonnet |
 | `implement [report]` | implement an existing preview (newest report by default) |
 
 The council never commits; it informs the human decision-maker and does not replace design ownership.
@@ -141,7 +148,7 @@ agents/                  the eight council members
 skills/design-council/
 ├── SKILL.md             orchestration
 ├── critique-protocol.md issue-row format and severity scale
-└── templates/           report, gallery, contact sheet
+└── templates/           base.html scaffold, render.cjs, report, gallery, contact sheet
 ```
 
 ## License

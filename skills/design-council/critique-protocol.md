@@ -5,6 +5,8 @@ Read only in Critique, Debate, and Verify. You have no memory beyond your prompt
 ## Inputs
 Open your images first (full-res shots and/or sheet). Open HTML or code only if your role says so, and Grep for the part you check before reading.
 
+Concept fidelity: concepts show only `default` + the riskiest state, mobile + the primary other viewport, light theme. Don't log missing states, dark mode, or secondary viewports as issues — they are added to the chosen direction later. Judge structure, flow, hierarchy, visual craft, and the riskiest state at full rigor.
+
 Text-only critique (concept briefs, no render): say so, cap confidence for visual claims at Medium, and focus on structure, flow, states, platform fit, and feasibility.
 
 ## Issue row (the only format for problems)

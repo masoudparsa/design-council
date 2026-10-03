@@ -18,6 +18,7 @@ Critique only works on something the critics can see, so the council critiques *
 - `--preview` or `--code` → delivery path (see Phase 0). Absent → ask.
 - First word `implement` → implement an existing preview (Path A, step A9). Optional report path; else the newest `design-council/*/report.md`.
 - `--from <path>` → Product Council report or product doc, used as Product Context.
+- `--lean` → concept Makers run on sonnet (Refine and Implementer stay opus). Cheaper exploration, slightly less polished concepts; the final is unaffected.
 - No request → ask for it.
 
 Respond in the user's language; tell every agent to do the same.
@@ -33,14 +34,31 @@ Allowed (no quality loss):
 6. **Stable prompt prefix** (brief path + phase) for every member call.
 7. **Quiet orchestration.** No echoing agent output into chat.
 8. **Ask first** (≤ 3 questions) instead of running on a weak brief.
+9. **Fidelity tiers.** Concepts are built at *concept fidelity*; only the chosen direction is raised to *full fidelity* (see below). Two of three concepts are discarded — don't polish them.
+10. **One browser launch per render batch** (`templates/render.cjs`), not one `npx` per shot.
+11. **Look at images only when needed.** The renderer flags failed, blank, and JS-erroring pages; open an image yourself only when it is flagged, or when you must judge it (Synthesis input, Verify).
+12. **Each agent reads only its slice.** Concept briefs live in their own files; agents write their own outputs instead of returning long text for you to re-save.
 
 Never (these lower quality):
 - Judging typography, spacing, or contrast from scaled-down images. Visual-craft critics always get **full-resolution** shots.
 - Fewer than 3 concepts in standard/deep — exploration breadth is where senior design quality comes from.
+- A final preview below full fidelity.
 - Handing off a preview the Maker hasn't looked at itself.
 - Skipping critique because members agree; critiquing anything unrendered when a render is possible.
 - Concepts that differ only in color, radius, or shadow.
-- Downgrading Director, Maker, Creative, Red Team, or Implementer models; giving the Director a summary instead of members' rows.
+- Downgrading Director, Maker, Creative, Red Team, or Implementer models (only exception: concept Makers under `--lean`); giving the Director a summary instead of members' rows.
+
+## Fidelity tiers
+
+| | Concept fidelity (A3) | Full fidelity (A8 final) |
+|---|---|---|
+| Viewports | mobile + the primary other viewport in the matrix | every viewport in the matrix |
+| States | `default` + the riskiest state | every required state |
+| Theme | light (dark only if the brief makes dark the primary theme) | light + dark |
+| Interaction | only what shows the concept's thesis | everything the brief needs |
+| Craft | real content, real hierarchy, type, spacing, color — judged at full res | same, plus every detail polished |
+
+Concept fidelity is not a wireframe: critics judge visual craft on it. It only skips breadth (extra states, dark, secondary viewports) that doesn't decide the direction.
 
 ## Members
 
@@ -57,7 +75,7 @@ Launch with the Agent tool: name below if copied to `~/.claude/agents/`, or `des
 | Design Red Team | `design-red-team` | opus |
 | Implementer | `design-implementer` | opus |
 
-Mechanics: one round = one message of parallel Agent calls. Members are stateless; later prompts include their own earlier rows. Discovery prompts contain only the brief. Director, Maker, and Implementer never critique or debate.
+Mechanics: one round = one message of parallel Agent calls. Pass `model: sonnet` to concept Makers only under `--lean`. Members are stateless; later prompts include their own earlier rows. Discovery prompts contain only the brief. Director, Maker, and Implementer never critique or debate.
 
 ## Modes
 
@@ -74,25 +92,30 @@ Mechanics: one round = one message of parallel Agent calls. Members are stateles
 
 ## Working folder
 
-`design-council/<topic-slug>/`: `brief.md` · `concepts/` · `shots/` · `sheets/` · `final/preview.html` · `index.html` (gallery) · `report.md`.
+`design-council/<topic-slug>/`: `brief.md` (request, context, Design Brief) · `concepts/<id>.brief.md` + `concepts/<id>.html` · `shots/` · `sheets/` · `jobs/` (render job files) · `final/preview.html` · `index.html` (gallery) · `report.md`.
 
 ## Rendering (shared by both paths)
 
-Use the Playwright CLI from the working folder with absolute `file:///` URLs (Windows: `file:///C:/...`). Skill folder: `${CLAUDE_PLUGIN_ROOT}/skills/design-council` (plugin) or `~/.claude/skills/design-council` (manual).
+Skill folder: `${CLAUDE_PLUGIN_ROOT}/skills/design-council` (plugin) or `~/.claude/skills/design-council` (manual). Use absolute `file:///` URLs (Windows: `file:///C:/...`).
+
+Write one job file per batch and render it with a **single browser launch**:
 
 ```bash
-npx -y playwright@1 install chromium   # once per machine, if missing
-
-# Full-resolution shots (visual craft): first viewport, not full-page
-npx -y playwright@1 screenshot --device "iPhone 13" "file:///ABS/x.html?state=default" shots/x.mobile.default.png
-npx -y playwright@1 screenshot --viewport-size "1440, 900" "file:///ABS/x.html?state=default" shots/x.desktop.default.png
-# Long screens: add a second shot with --full-page for flow/structure review
-# Dark: add --color-scheme dark
-
-# Contact sheet (overview: mobile default + riskiest state + desktop/tablet, one image)
-npx -y playwright@1 screenshot --viewport-size "1400, 760" \
-  "file:///SKILL/templates/sheet.html?src=file:///ABS/x.html&state=empty&desktop=1&label=Concept%20A" sheets/x.png
+npx -y playwright@1 install chromium                          # once per machine, if missing
+npx -y -p playwright@1 node "SKILL/templates/render.cjs" jobs/a.json
 ```
+
+```json
+{ "shots": [
+  { "url": "file:///ABS/concepts/a.html?state=default", "out": "../shots/a.mobile.default.png", "device": "iPhone 13" },
+  { "url": "file:///ABS/concepts/a.html?state=default", "out": "../shots/a.mobile.full.png", "device": "iPhone 13", "fullPage": true },
+  { "url": "file:///ABS/concepts/a.html?state=default", "out": "../shots/a.desktop.default.png", "viewport": [1440, 900] },
+  { "url": "file:///SKILL/templates/sheet.html?src=file:///ABS/concepts/a.html&state=empty&desktop=1&label=Concept%20A",
+    "out": "../sheets/a.png", "viewport": [1400, 760] }
+] }
+```
+
+`out` is relative to the job file. Full-res shots are first-viewport (not full-page); add a `fullPage` shot for flow review of long screens; `"dark": true` for dark. The script prints `ok` / `FAIL` per shot plus `WARN: page looks blank` and JS errors. Put all concepts in one job file when you render them together. Fallback if the script can't run: `npx -y playwright@1 screenshot …` per shot.
 
 Sheet params: `src`, `state` (riskiest state), `desktop=1` or `tablet=1` (omit for mobile-only), `label`, `theme=dark`.
 
@@ -103,7 +126,7 @@ Sheet params: `src`, `state` (riskiest state), `desktop=1` or `tablet=1` (omit f
 | Platform | sheet + full-res shots for each viewport + full-page mobile |
 | UX, Red Team | sheet + full-page mobile default + full-res riskiest state |
 
-Read every image yourself before passing it on. Broken or blank → fix the render or return to the Maker once with the exact defect. If rendering is impossible, say so in one line, continue source-based, mark it lower confidence.
+Don't open images just to pass them on: check the renderer output instead. A `FAIL`, blank `WARN`, or JS error → open that image, then fix the render or return to the Maker once with the exact defect. If rendering is impossible, say so in one line, continue source-based, mark it lower confidence.
 
 ## Phase 0 — Frame (both paths)
 
@@ -127,19 +150,19 @@ Add other questions only if missing info would change the design (platform, prod
 
 **A1 Discovery** (standard, deep): analysts in parallel, brief path only. DS&A11y reads the existing design system; Creative runs its benchmark searches; Red Team (deep) attacks the brief.
 
-**A2 Direction:** `design-director` gets the brief path + all Discovery rows (none in quick). It appends the **Design Brief** (user goal, primary task, must-haves, platform matrix, required states, riskiest state, dark mode) and **concept briefs** to `brief.md`. Every pair of concepts differs on at least one structural axis derived from this problem; if not, send back once with the reason.
+**A2 Direction:** `design-director` gets the brief path + all Discovery rows (none in quick). It appends the **Design Brief** (user goal, primary task, must-haves, platform matrix, required states, riskiest state, dark mode) to `brief.md` and writes each concept brief to `concepts/<id>.brief.md`. Every pair of concepts differs on at least one structural axis derived from this problem; if not, send back once with the reason.
 
-**A3 Make:** one `design-ui-maker` call per concept, in parallel — brief path, its concept name, output path, design-system paths, skill folder path. A Maker never sees other concepts. The Maker renders and self-reviews its work before returning (agent file).
+**A3 Make:** one `design-ui-maker` call per concept, in parallel, at **concept fidelity** — brief path, its concept brief path, output path, design-system paths, skill folder path, working folder. A Maker never sees other concepts. The Maker starts from `templates/base.html`, renders, and self-reviews within its budget before returning (agent file).
 
-**A4 Render** per the table above. Copy `templates/gallery.html` to `index.html`, fill `CONCEPTS`.
+**A4 Render** per the table above, all concepts in one job file. Concepts have only `default` + the riskiest state and no dark shots unless the brief makes dark primary. Copy `templates/gallery.html` to `index.html`, fill `CONCEPTS`.
 
-**A5 Critique:** critics in parallel — brief path, their images, concept HTML paths, their Discovery rows, `critique-protocol.md` path. If Discovery showed broad agreement, tell Red Team to attack the consensus and ask everyone what the council is collectively missing. Then build your **index**: rankings per member, blockers/majors per concept, disputes, borrow proposals.
+**A5 Critique:** critics in parallel — brief path, their images, concept HTML paths, their Discovery rows, `critique-protocol.md` path. Tell them the concepts are at concept fidelity. If Discovery showed broad agreement, tell Red Team to attack the consensus and ask everyone what the council is collectively missing. Then build your **index**: rankings per member, blockers/majors per concept, disputes, borrow proposals.
 
 **A6 Debate:** disputes that change the direction or a blocker, most critical first. Each side gets its disputed rows, the opposing rows, the protocol path. One reply per round; stop on concession or "needs evidence X" → open question / usability test. All disputes in one parallel message.
 
-**A7 Synthesis:** `design-director` gets brief path, images, all critique and debate rows verbatim (labeled by role), your index, `templates/design-report.md` path. Returns chosen direction (concept or explicit hybrid), decision records, blocker resolutions, stress test (same call), and a numbered **Refine Brief** tied to issue IDs. Save as `report.md`.
+**A7 Synthesis:** `design-director` gets brief path, images, all critique and debate rows verbatim (labeled by role), your index, `templates/design-report.md` path, and the `report.md` path to write. It writes the report itself and returns only a short summary. The report holds the chosen direction (concept or explicit hybrid), decision records, blocker resolutions, stress test (same call), and a numbered **Refine Brief** tied to issue IDs. The Refine Brief must also list what full fidelity adds: remaining states, dark mode, remaining viewports.
 
-**A8 Refine + Verify:** copy the chosen concept to `final/preview.html`; `design-ui-maker` applies the Refine Brief by editing (rewrite only for a hybrid) and self-reviews. Render it (full-res + sheet), add "Final" to the gallery. Check each Refine item yourself against the full-res shots: done / partial / missing. Deep: also DS&A11y and Red Team in parallel (checklist + new blockers only). Missing items or new blockers → one more Refine call with exactly those items. Never loop twice.
+**A8 Refine + Verify:** copy the chosen concept to `final/preview.html`; `design-ui-maker` in refine mode applies the Refine Brief by editing (rewrite only for a hybrid), raises it to **full fidelity**, and self-reviews. Render it (full-res for every viewport and state, dark, + sheet) in one job file, add "Final" to the gallery. Check each Refine item yourself against the full-res shots: done / partial / missing. Deep: also DS&A11y and Red Team in parallel (checklist + new blockers only). Missing items or new blockers → one more Refine call with exactly those items. Never loop twice.
 
 Chat output: executive summary, `index.html` path (open it with `open` / `start` / `xdg-open` if local), report path, and: "Want me to implement the final design in this <platform> repo?" — the user decides.
 
@@ -159,11 +182,11 @@ The council still explores before committing; the difference is that the only re
 
 **B1 Discovery:** same as A1.
 
-**B2 Direction:** same as A2 — 3 concept briefs in standard/deep (1 in quick), plus for each a short **screen spec**: layout per viewport, component inventory (existing vs new), states, key interactions.
+**B2 Direction:** same as A2 — 3 concept brief files in standard/deep (1 in quick), plus for each a short **screen spec**: layout per viewport, component inventory (existing vs new), states, key interactions.
 
 **B3 Concept critique:** critics review the concept briefs and screen specs (text — say so in the prompt; confidence is capped at Medium for visual claims). Same row format. Debate as in A6 if a dispute changes the choice.
 
-**B4 Decision:** `design-director` chooses the direction and writes `report.md` with decision records and a detailed **Build Spec** (replaces the Refine Brief): per viewport layout, tokens to map or add, components to reuse/create, every state, interactions, accessibility requirements, RTL notes.
+**B4 Decision:** `design-director` chooses the direction and writes `report.md` itself with decision records and a detailed **Build Spec** (replaces the Refine Brief): per viewport layout, tokens to map or add, components to reuse/create, every state, interactions, accessibility requirements, RTL notes.
 
 **B5 Build:** `design-implementer` with the Build Spec, platform, design-system/component paths, l10n, check commands. Plan first; same approval rule as A9 step 4. Then build and run checks.
 
@@ -176,7 +199,7 @@ Chat output: executive summary, files changed, shot paths, report path, TODOs. D
 ## Real-screen check (implemented code)
 
 Render the actual app, then critique per the "Who gets what" table.
-- **Web:** start the dev server in the background (the repo's `dev`/`start` script), wait for the port, screenshot the new route(s) with the same CLI commands using `http://localhost:<port>/<route>`, stop the server. Trigger states via existing query params, mock flags, or temporary fixtures — note which.
+- **Web:** start the dev server in the background (the repo's `dev`/`start` script), wait for the port, screenshot the new route(s) with a render job file using `http://localhost:<port>/<route>`, stop the server. Trigger states via existing query params, mock flags, or temporary fixtures — note which.
 - **Blazor:** `dotnet run` in the background, same as web.
 - **Flutter with `web/`:** `flutter build web`, serve `build/web` with a static server (`npx -y serve -s build/web -l 5055`), screenshot. Note that web rendering differs slightly from iOS/Android.
 - **Flutter without `web/`:** don't add platforms on your own. Ask the user for device screenshots of the new screens (and states), or skip the visual check and mark the result "not visually verified".

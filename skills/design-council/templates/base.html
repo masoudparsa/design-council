@@ -1,0 +1,80 @@
+<!doctype html>
+<!-- CONCEPT: <name> — <structural thesis in one line> -->
+<!-- Design Council scaffold. Copy, then replace every <…> placeholder. Keep the TOKENS markers,
+     the state/theme router, and the a11y base; design everything else. -->
+<html lang="<lang>" dir="<ltr|rtl>">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title><screen title></title>
+<!-- Optional Google Font, e.g. Vazirmatn for Persian. Keep the fallback stack in --font-*. -->
+<style>
+/* TOKENS START */
+:root {
+  color-scheme: light dark;
+  /* color: semantic roles only */
+  --c-bg: <#>; --c-surface: <#>; --c-surface-2: <#>;
+  --c-text: <#>; --c-text-muted: <#>; --c-border: <#>;
+  --c-primary: <#>; --c-on-primary: <#>;
+  --c-success: <#>; --c-warning: <#>; --c-danger: <#>;
+  --c-focus: <#>;
+  /* type */
+  --font-body: <family>, system-ui, sans-serif;
+  --font-display: var(--font-body);
+  --fs-xs: 12px; --fs-sm: 14px; --fs-md: 16px; --fs-lg: 20px; --fs-xl: 28px;
+  --lh-body: 1.5; --lh-tight: 1.2;
+  /* space: one base unit */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px;
+  /* shape + elevation */
+  --r-sm: 6px; --r-md: 12px; --r-lg: 20px; --r-full: 999px;
+  --e-1: <shadow>; --e-2: <shadow>;
+  /* motion */
+  --d-fast: 120ms; --d-base: 220ms; --ease: cubic-bezier(.2, .7, .2, 1);
+  --target: 44px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { /* dark overrides — full fidelity only */ } }
+:root[data-theme="dark"] { /* same dark overrides */ }
+/* TOKENS END */
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--c-bg); color: var(--c-text);
+  font: var(--fs-md)/var(--lh-body) var(--font-body);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible { outline: 2px solid var(--c-focus); outline-offset: 2px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* State router: mark blocks with data-state="empty", "loading error", "!default" (= every state except default). */
+[data-state] { display: none !important; }
+/* the script adds .on to blocks whose data-state matches */
+[data-state].on { display: revert !important; }
+
+/* ---- concept styles below ---- */
+</style>
+</head>
+<body>
+
+<!-- ---- concept markup below ---- -->
+
+<script>
+// State + theme router. URL: ?state=default|empty|loading|error|…  &theme=dark|light
+(() => {
+  const q = new URLSearchParams(location.search);
+  const state = q.get('state') || 'default';
+  const theme = q.get('theme');
+  const root = document.documentElement;
+  root.dataset.view = state;               // style per state with :root[data-view="empty"] …
+  if (theme) root.dataset.theme = theme;
+  document.querySelectorAll('[data-state]').forEach(el => {
+    const list = el.dataset.state.split(/\s+/);
+    const hit = list.includes(state) || (list.includes('!default') && state !== 'default');
+    el.classList.toggle('on', hit);
+  });
+})();
+</script>
+</body>
+</html>
