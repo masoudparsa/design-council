@@ -76,7 +76,7 @@ Launch with the Agent tool: name below if copied to `~/.claude/agents/`, or `des
 | Design Red Team | `design-red-team` | opus |
 | Implementer | `design-implementer` | opus |
 
-Mechanics: one round = one message of parallel Agent calls. Pass `model: sonnet` to concept Makers only under `--lean`. Members are stateless; later prompts include their own earlier rows. Discovery prompts contain only the brief. Director, Maker, and Implementer never critique or debate.
+Mechanics: one round = one message of parallel Agent calls. Agent files set `maxTurns` as a safety net (Maker 35, critics 20); if an agent stops at the cap, use what it returned and note the gap — don't relaunch it blindly. Pass `model: sonnet` to concept Makers only under `--lean`. Members are stateless; later prompts include their own earlier rows. Discovery prompts contain only the brief. Director, Maker, and Implementer never critique or debate.
 
 ## Modes
 
@@ -141,6 +141,8 @@ Don't open images just to pass them on: check the renderer output instead. A `FA
 ## Phase 0 — Frame (both paths)
 
 **Repo scan** (Glob/Grep only): platform (`pubspec.yaml` + flutter → Flutter · `package.json` → next / react / vue / nuxt / @angular/core / svelte / tailwindcss · `*.csproj` with Blazor/Razor → Blazor · several → note all · none → unknown); design-system paths (`ThemeData`, `ThemeExtension`, `*theme*.dart`, `tailwind.config.*`, CSS custom properties, `tokens.*`, component folders, fonts); l10n (`l10n`, `.arb`, `i18n`); for web, the dev/build scripts; for Flutter, whether a `web/` folder exists.
+
+**Helper skills:** from the skills listed in your own context, note which of these are installed (names may be plugin-prefixed, e.g. `ui-ux-pro-max:ui-ux-pro-max`, `design:ux-copy`): `ui-ux-pro-max`, `ux-copy`, and a styling skill matching the detected stack. Pass the exact installed names in one line to `design-ui-maker` and `design-implementer` calls only ("Helper skills available: …"). None installed → say nothing; the council works the same. Never preload skills, never pass them to critics or the Director.
 
 **Renderer check** (Path A, or Path B with a web-renderable target): run `render.cjs --check`. If it isn't ready, start `--setup` in the background now so it finishes while the user answers the questions below.
 

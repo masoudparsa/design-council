@@ -3,6 +3,7 @@ name: design-platform
 description: "Design Council member: platform experience across responsive web, iOS, and Android, plus interaction and motion."
 tools: Read, Grep, Glob
 model: sonnet
+maxTurns: 20
 ---
 
 # Platform Specialist

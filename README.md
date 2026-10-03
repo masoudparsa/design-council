@@ -86,6 +86,8 @@ Director, Maker, and Implementer never critique or debate.
 - **Transport** — file paths instead of pasted content, compact issue rows, debates carry only disputed rows.
 - **Refine stays focused** — the Refine Brief keeps every issue, but only `B`/`M` rows are numbered and verified one by one; minor rows go to a Polish list. The Refine Maker reads only the sections it needs and maps the HTML before reading regions.
 - **States sheets** — the final's many states are reviewed on one or two overview images (`states.html`); full-res shots stay for default, riskiest, dark, text scale ×2, and anything a Refine item touches.
+- **Helper skills, on demand** — if `ui-ux-pro-max` or `ux-copy` is installed, the Maker may look up a font pairing, a UX rule, or state copy (≤ 2 calls), and the Implementer stack patterns. Never preloaded, never given to critics, and never allowed to override the brief. Not installed → nothing changes.
+- **Turn caps** — `maxTurns` in agent files (Maker 35, critics 20) stops runaway loops.
 - **`--lean`** (optional) — concept Makers on sonnet; Refine and Implementer stay on opus.
 
 Never cut: three concepts in standard/deep, full-resolution shots for visual-craft critics, the Maker's self-review, the critique round, a full-fidelity final, and opus for Director, Maker, Creative, Red Team, and Implementer.

@@ -3,6 +3,7 @@ name: design-red-team
 description: "Design Council member: adversarial reviewer that tries to prove the design and the council's reasoning wrong."
 tools: Read, Grep, Glob
 model: opus
+maxTurns: 20
 ---
 
 # Design Red Team

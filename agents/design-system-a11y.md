@@ -3,6 +3,7 @@ name: design-system-a11y
 description: "Design Council member: design-system consistency (tokens, components, states, dark mode) and accessibility (contrast, focus, targets, semantics, motion). Reads the repo's existing design system."
 tools: Read, Grep, Glob
 model: sonnet
+maxTurns: 20
 ---
 
 # Design System & Accessibility

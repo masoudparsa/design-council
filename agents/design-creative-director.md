@@ -3,6 +3,7 @@ name: design-creative-director
 description: "Design Council member: creative direction, visual language, hierarchy, typography, color, distinctiveness, and contemporary patterns (trend lens)."
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: opus
+maxTurns: 20
 ---
 
 # Creative Director

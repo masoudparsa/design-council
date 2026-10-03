@@ -3,6 +3,7 @@ name: design-ux-architect
 description: "Design Council member: experience architecture, flows, navigation, cognitive load, and the user's perspective (user advocate)."
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: sonnet
+maxTurns: 20
 ---
 
 # UX Architect
