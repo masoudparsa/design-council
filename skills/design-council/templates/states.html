@@ -1,0 +1,39 @@
+<!doctype html>
+<!-- Design Council states sheet: many states of one screen in one image, for overview only.
+     Params: src (absolute file URL), states=default,empty,error,… , w=390 h=844 (frame size), cols=6,
+     label, theme=dark, scale=1.5 (text size). Render with a 1400-wide viewport and "fullPage": true.
+     Visual craft is never judged from this sheet — use full-res shots for that. -->
+<html lang="en"><head><meta charset="utf-8">
+<style>
+  :root { color-scheme: light dark; --bg:#eceef1; --fg:#1d2024; --frame:#c9cdd3; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181b; --fg:#e7e9ec; --frame:#3a3f46; } }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--fg); font: 13px/1.3 system-ui, sans-serif; padding: 20px 24px; }
+  h1 { font-size: 15px; margin-bottom: 12px; }
+  .grid { display: grid; gap: 18px 16px; }
+  .cap { margin-bottom: 6px; font-weight: 600; }
+  .box { overflow: hidden; border: 1px solid var(--frame); border-radius: 10px; background: #fff; }
+  iframe { border: 0; transform-origin: 0 0; display: block; }
+</style></head>
+<body>
+<h1 id="t"></h1>
+<div class="grid" id="grid"></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const src = q.get('src');
+  const states = (q.get('states') || 'default').split(',').map(s => s.trim()).filter(Boolean);
+  const w = +q.get('w') || 390, h = +q.get('h') || 844, cols = +q.get('cols') || 6;
+  const dark = q.get('theme') === 'dark';
+  const scale = q.get('scale');
+  const s = Math.min(1, (1400 - 48 - 16 * (cols - 1)) / cols / w);
+  document.getElementById('t').textContent = (q.get('label') || 'States') + ` · ${w}×${h}` + (dark ? ' · dark' : '') + (scale ? ` · text ×${scale}` : '');
+  const grid = document.getElementById('grid');
+  grid.style.gridTemplateColumns = `repeat(${cols}, ${Math.floor(w * s)}px)`;
+  for (const st of states) {
+    const url = src + (src.includes('?') ? '&' : '?') + 'state=' + encodeURIComponent(st) + (dark ? '&theme=dark' : '') + (scale ? '&scale=' + scale : '');
+    const d = document.createElement('div');
+    d.innerHTML = `<div class="cap">${st}</div><div class="box" style="width:${Math.floor(w*s)}px;height:${Math.floor(h*s)}px"><iframe src="${url}" width="${w}" height="${h}" style="transform:scale(${s})"></iframe></div>`;
+    grid.appendChild(d);
+  }
+</script>
+</body></html>

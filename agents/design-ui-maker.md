@@ -37,7 +37,7 @@ Brief path (read the Design Brief section only), your concept brief path, output
 - `<html lang="…" dir="ltr|rtl">` from the brief. RTL-first when the brief says so: logical properties (`margin-inline-start`, `inset-inline-end`), mirrored directional icons, a proper script font (e.g. Vazirmatn for Persian) with suitable line-height.
 - `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`; respect `env(safe-area-inset-*)`.
 - **Tokens** in one `:root` block between `/* TOKENS START */` and `/* TOKENS END */`: color (semantic names), type scale, spacing, radius, elevation, motion durations/easing. Dark values under `@media (prefers-color-scheme: dark)` and `:root[data-theme="dark"]`. Use only tokens in components.
-- **States:** use the scaffold's router: `?state=` (`default`, plus the states your fidelity tier needs) and `?theme=dark`. Mark state-specific blocks with `data-state="…"` or style with `:root[data-view="…"]`.
+- **States:** use the scaffold's router: `?state=` (`default`, plus the states your fidelity tier needs), `?theme=dark`, and `?scale=` (text size; keep type tokens in `rem` so it works). Mark state-specific blocks with `data-state="…"` or style with `:root[data-view="…"]`.
 - Responsive across the brief's platform matrix: mobile 390, tablet 834, desktop 1440. Mobile-only products still render sensibly wider (centered column), but don't design a desktop.
 - Realistic content in the product language: real-length names, a long-text case, real numbers. No lorem ipsum.
 - Accessibility built in: contrast AA, visible `:focus-visible`, targets ≥ 44–48px on touch, semantic elements and labels, `prefers-reduced-motion`.
@@ -46,7 +46,12 @@ Brief path (read the Design Brief section only), your concept brief path, output
 - Keep it lean: no dead CSS, no unused components.
 
 ## Refine mode
-You get the chosen file (already copied to the output path) and a numbered Refine Brief. Apply each item with **Edit** — do not rewrite the file unless told it is a hybrid. Then raise it to **full fidelity** (remaining states, dark values in the tokens block, remaining viewports). Don't change what the brief doesn't ask for.
+You get the chosen file (already copied to the output path) and the Refine Brief in `report.md`. Apply every numbered item and the Polish list with **Edit** — do not rewrite the file unless told it is a hybrid. Then raise it to **full fidelity** (remaining states, dark values in the tokens block, remaining viewports, text scale). Don't change what the brief doesn't ask for.
+
+Read narrowly — the file came from another Maker, but you still don't need all of it at once:
+1. In `report.md`, Grep the `Refine Brief` heading and read only that section (offset/limit); read a decision record only when an item cites it.
+2. In `brief.md`, read only the Design Brief section; in discovery, only the token rows you are told about.
+3. Map the HTML first: Grep `TOKENS START`, `<section`, `id=`, `data-state`, and the main class names. Then read only the region an item touches, item by item.
 
 ## Self-review (once, before replying)
 Render the **shot list the orchestrator gave you** — these same files go to the critics, so don't add extra shots and don't rename them. Write `<working folder>/jobs/<concept>.json` and run it with one browser launch:
@@ -55,7 +60,7 @@ Render the **shot list the orchestrator gave you** — these same files go to th
 node "SKILL/templates/render.cjs" jobs/<concept>.json
 ```
 
-Use absolute `file:///` URLs (Windows `file:///C:/...`); `"device": "iPhone 13"` for mobile, `"viewport": [1440, 900]` for desktop, the sheet URL as given. In refine mode the list also includes dark and every required state. If the script reports playwright or Chromium missing, run `node "SKILL/templates/render.cjs" --setup` once.
+Use absolute `file:///` URLs (Windows `file:///C:/...`); `"device": "iPhone 13"` for mobile, `"viewport": [1440, 900]` for desktop, the sheet URL as given. In refine mode the list also includes dark and every required state. If the script reports playwright or no browser found, run `node "SKILL/templates/render.cjs" --setup` once.
 
 Look at them as a senior reviewer would: hierarchy, alignment, spacing rhythm, truncation, contrast, RTL mirroring, broken layout, template tells. Fix what you find with Edit, re-run the job file once (one launch, a few seconds). No third pass. If the render itself fails twice, stop and report it.
 

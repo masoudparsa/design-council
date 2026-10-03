@@ -8,7 +8,7 @@
       "name": "design-council",
       "source": "./",
       "description": "Multi-agent design council: discovery, structurally different concepts as live HTML previews, screenshot-based critique, debate, director synthesis, and optional implementation in the current web or mobile repo.",
-      "version": "1.3.0"
+      "version": "1.4.0"
     }
   ]
 }

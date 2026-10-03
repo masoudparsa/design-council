@@ -84,6 +84,8 @@ Director, Maker, and Implementer never critique or debate.
 - Fastest options: `quick` for one-screen work, `--lean` for exploration, `--preview` / `--code` to skip the delivery question.
 - **Narrow reads, own writes** — each Maker reads only its own concept brief; the Director writes `brief.md` and `report.md` itself instead of returning long text to be re-saved.
 - **Transport** — file paths instead of pasted content, compact issue rows, debates carry only disputed rows.
+- **Refine stays focused** — the Refine Brief keeps every issue, but only `B`/`M` rows are numbered and verified one by one; minor rows go to a Polish list. The Refine Maker reads only the sections it needs and maps the HTML before reading regions.
+- **States sheets** — the final's many states are reviewed on one or two overview images (`states.html`); full-res shots stay for default, riskiest, dark, text scale ×2, and anything a Refine item touches.
 - **`--lean`** (optional) — concept Makers on sonnet; Refine and Implementer stay on opus.
 
 Never cut: three concepts in standard/deep, full-resolution shots for visual-craft critics, the Maker's self-review, the critique round, a full-fidelity final, and opus for Director, Maker, Creative, Red Team, and Implementer.
@@ -105,7 +107,7 @@ design-council/<topic>/
 ## Requirements
 
 - Claude Code
-- Node.js. The council sets up its renderer on first run (Playwright + Chromium in `~/.claude/design-council-runtime`); to do it yourself: `node skills/design-council/templates/render.cjs --setup`. To use an installed Chrome instead, set `DC_CHROMIUM` to its path.
+- Node.js. The council sets up its renderer on first run (Playwright in `~/.claude/design-council-runtime`). It uses an installed **Edge or Chrome** when available and downloads Chromium only if neither exists; to do it yourself: `node skills/design-council/templates/render.cjs --setup`. `DC_CHROMIUM` can point at a specific browser executable.
 
 ## Installation
 
@@ -159,7 +161,7 @@ agents/                  the eight council members
 skills/design-council/
 ├── SKILL.md             orchestration
 ├── critique-protocol.md issue-row format and severity scale
-└── templates/           base.html scaffold, render.cjs, report, gallery, contact sheet
+└── templates/           base.html scaffold, render.cjs, states sheet, contact sheet, gallery, report
 ```
 
 ## License

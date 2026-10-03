@@ -38,7 +38,10 @@ Fill the report template (quick or full, path given) and **write it to the `repo
 4. **Blockers** — every `B` row resolved, or accepted with an explicit reason.
 5. **Stress test** — strongest case this choice is wrong · most important assumption · what evidence would reverse it · cheaper or reversible alternative · dissent worth preserving. If it changes your answer, revise before returning.
 6. **Quality gates** — pass / fail / n/a per gate group in the template.
-7. **Refine Brief** — numbered, concrete, buildable changes for the Maker, each tied to issue IDs. No vague items. End it with the full-fidelity additions: remaining states, dark mode, remaining viewports (concepts were built at concept fidelity).
+7. **Refine Brief** — concrete, buildable, tied to issue IDs, no vague items. Two parts, nothing dropped:
+   - **Numbered items** — every `B` and `M` row (and any `m` a decision depends on), most important first. Each is verified individually. If there are more than ~15, merge items that touch the same component into one.
+   - **Polish list** — remaining `m` rows as one compact list (one line each, IDs). The Maker applies them; verification only spot-checks.
+   - Then the **full-fidelity additions**: the exact list of required states, dark mode, remaining viewports, text-scale support (concepts were built at concept fidelity).
 8. **Open questions** — including usability tests that would settle open disputes.
 
 Return only: report path, chosen direction in one line, number of Refine items, blockers accepted. Don't paste the report.

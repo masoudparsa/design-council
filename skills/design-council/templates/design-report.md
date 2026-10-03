@@ -71,6 +71,10 @@ What · Why · UX · Visual · Web · Mobile · Design system · Trade-off · Ev
 ## Refine Brief
 1. … (IDs) — done / partial / missing after verify
 
+**Polish** — … (IDs) · … (IDs)
+
+**Full fidelity** — states: … · dark · viewports: … · text scale 1 / 1.5 / 2
+
 ## Open questions & usability tests
 - …
 

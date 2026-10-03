@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Design Council batch renderer: one browser launch for every screenshot.
 // Setup (once per machine):  node render.cjs --setup
-//   installs playwright into ~/.claude/design-council-runtime and downloads Chromium.
+//   installs playwright into ~/.claude/design-council-runtime; downloads Chromium only if no Edge/Chrome is installed.
 // Check:  node render.cjs --check   (exit 0 ready · 2 playwright missing · 3 Chromium missing)
 // Usage:  node render.cjs jobs.json
 // jobs.json: { "shots": [ { "url": "file:///ABS/x.html?state=default", "out": "shots/x.mobile.default.png",
@@ -25,34 +25,47 @@ function loadPlaywright(quiet) {
   process.exit(2);
 }
 
+// Browser order: DC_CHROMIUM path → bundled Chromium → installed Edge → installed Chrome.
+async function launch(chromium) {
+  const tries = [];
+  if (process.env.DC_CHROMIUM) tries.push(['DC_CHROMIUM', { executablePath: process.env.DC_CHROMIUM }]);
+  tries.push(['chromium', {}], ['msedge', { channel: 'msedge' }], ['chrome', { channel: 'chrome' }]);
+  for (const [name, opts] of tries) {
+    try { const b = await chromium.launch(opts); return { browser: b, name }; } catch {}
+  }
+  return null;
+}
+
 function setup() {
   fs.mkdirSync(RUNTIME, { recursive: true });
   const run = cmd => execSync(cmd, { stdio: 'inherit', cwd: RUNTIME });
   const cli = path.join(RUNTIME, 'node_modules', 'playwright', 'cli.js');
   if (!fs.existsSync(cli)) run('npm install --no-audit --no-fund --prefix . playwright@1');
-  run(`node "${cli}" install chromium`);
-  console.log('ready: ' + RUNTIME);
+  console.log('playwright ready: ' + RUNTIME);
+  const pw = require(path.join(RUNTIME, 'node_modules', 'playwright'));
+  return launch(pw.chromium).then(l => {
+    if (l) { console.log('browser: ' + l.name + ' (no download needed)'); return l.browser.close(); }
+    run(`node "${cli}" install chromium`);
+  });
 }
 
 (async () => {
   const arg = process.argv[2];
-  if (arg === '--setup') { setup(); return; }
+  if (arg === '--setup') { await setup(); return; }
   if (arg === '--check') {
     const pw = loadPlaywright(true);
     if (!pw) { console.log('missing: playwright (run --setup)'); process.exit(2); }
-    try { const b = await pw.chromium.launch(process.env.DC_CHROMIUM ? { executablePath: process.env.DC_CHROMIUM } : {}); await b.close(); console.log('ready'); process.exit(0); }
-    catch { console.log('missing: chromium (run --setup)'); process.exit(3); }
+    const l = await launch(pw.chromium);
+    if (!l) { console.log('missing: browser — no Chromium, Edge, or Chrome found (run --setup)'); process.exit(3); }
+    console.log('ready: ' + l.name); await l.browser.close(); process.exit(0);
   }
   const jobsPath = path.resolve(process.argv[2] || 'jobs.json');
   const base = path.dirname(jobsPath);
   const { shots = [] } = JSON.parse(fs.readFileSync(jobsPath, 'utf8'));
   const { chromium, devices } = loadPlaywright();
-  let browser;
-  try { browser = await chromium.launch(process.env.DC_CHROMIUM ? { executablePath: process.env.DC_CHROMIUM } : {}); }
-  catch (e) {
-    console.error('Chromium missing. Run once: node render.cjs --setup\n' + e.message);
-    process.exit(3);
-  }
+  const l = await launch(chromium);
+  if (!l) { console.error('No browser found (Chromium, Edge, Chrome). Run once: node render.cjs --setup'); process.exit(3); }
+  const browser = l.browser;
   let failed = 0;
   for (const s of shots) {
     const out = path.resolve(base, s.out);
@@ -78,6 +91,6 @@ function setup() {
     }
   }
   await browser.close();
-  console.log(`${shots.length - failed}/${shots.length} rendered`);
+  console.log(`${shots.length - failed}/${shots.length} rendered (${l.name})`);
   process.exit(failed ? 1 : 0);
 })();

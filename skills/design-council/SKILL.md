@@ -103,7 +103,7 @@ Write one job file per batch and render it with a **single browser launch**:
 
 ```bash
 node "SKILL/templates/render.cjs" --check    # 0 ready · 2/3 → run --setup
-node "SKILL/templates/render.cjs" --setup    # once per machine: playwright + Chromium into ~/.claude/design-council-runtime
+node "SKILL/templates/render.cjs" --setup    # once per machine: playwright into ~/.claude/design-council-runtime; Chromium only if no Edge/Chrome
 node "SKILL/templates/render.cjs" jobs/a.json
 ```
 
@@ -117,9 +117,15 @@ node "SKILL/templates/render.cjs" jobs/a.json
 ] }
 ```
 
-`out` is relative to the job file. Full-res shots are first-viewport (not full-page); add a `fullPage` shot for flow review of long screens; `"dark": true` for dark. The script prints `ok` / `FAIL` per shot plus `WARN: page looks blank` and JS errors. Put all concepts in one job file when you render them together. To use an installed Chrome instead of downloading Chromium, set `DC_CHROMIUM` to its executable path. Fallback if the script can't run: `npx -y playwright@1 screenshot …` per shot.
+`out` is relative to the job file. Full-res shots are first-viewport (not full-page); add a `fullPage` shot for flow review of long screens; `"dark": true` for dark. The script prints `ok` / `FAIL` per shot plus `WARN: page looks blank` and JS errors. Put all concepts in one job file when you render them together. Browser order: `DC_CHROMIUM` (path) → bundled Chromium → installed Edge → installed Chrome; the summary line names the one used. Fallback if the script can't run: `npx -y playwright@1 screenshot …` per shot.
 
 Sheet params: `src`, `state` (riskiest state), `desktop=1` or `tablet=1` (omit for mobile-only), `label`, `theme=dark`.
+
+**States sheet** (`templates/states.html`) — many states of one screen in one image, for coverage review: `src`, `states=default,empty,error,…`, `w`/`h` (frame, e.g. 360/640), `cols` (default 6), `label`, `theme=dark`, `scale=1.5` (text size). Render with `"viewport": [1400, 800], "fullPage": true`. It is an overview: never judge type, spacing, or contrast from it. Any state that looks wrong on it gets a full-res shot.
+
+**Text-size gates:** previews read `?scale=1.5` / `?scale=2` (type tokens are rem), so text-scaling checks are just URLs.
+
+**Final shot list (A8)** — full-res: `default` on every target viewport · the riskiest state · `default` dark · `default` + riskiest at `scale=2` (mobile) · any state a Refine item is about. Everything else: one light and one dark **states sheet** covering every required state. Typical: ≈ 8 full-res + 2–3 sheets instead of one full-res shot per state × theme × scale.
 
 **Who gets what:**
 | Critic | Gets |
@@ -127,6 +133,8 @@ Sheet params: `src`, `state` (riskiest state), `desktop=1` or `tablet=1` (omit f
 | Creative, DS&A11y | full-res default shots for every target viewport + sheet (+ dark full-res if required) |
 | Platform | sheet + full-res shots for each viewport + full-page mobile |
 | UX, Red Team | sheet + full-page mobile default + full-res riskiest state |
+
+In Verify (A8) and Tweak, a states sheet replaces per-state full-res shots for states no Refine item touches.
 
 Don't open images just to pass them on: check the renderer output instead. A `FAIL`, blank `WARN`, or JS error → open that image, then fix the render or return to the Maker once with the exact defect. If rendering is impossible, say so in one line, continue source-based, mark it lower confidence.
 
@@ -166,7 +174,7 @@ Add other questions only if missing info would change the design (platform, prod
 
 **A7 Synthesis:** `design-director` gets brief path, images, all critique and debate rows verbatim (labeled by role), your index, `templates/design-report.md` path, and the `report.md` path to write. It writes the report itself and returns only a short summary. The report holds the chosen direction (concept or explicit hybrid), decision records, blocker resolutions, stress test (same call), and a numbered **Refine Brief** tied to issue IDs. The Refine Brief must also list what full fidelity adds: remaining states, dark mode, remaining viewports.
 
-**A8 Refine + Verify:** copy the chosen concept to `final/preview.html`; `design-ui-maker` in refine mode applies the Refine Brief by editing (rewrite only for a hybrid), raises it to **full fidelity**, and self-reviews. Its shot list is the full final set (full-res for every viewport and state, dark, + sheet); the Maker renders it during self-review — don't re-render. Add "Final" to the gallery. Check each Refine item yourself against the full-res shots: done / partial / missing. Deep: also DS&A11y and Red Team in parallel (checklist + new blockers only). Missing items or new blockers → one more Refine call with exactly those items. Never loop twice.
+**A8 Refine + Verify:** copy the chosen concept to `final/preview.html`; `design-ui-maker` in refine mode applies the Refine Brief by editing (rewrite only for a hybrid), raises it to **full fidelity**, and self-reviews. Its shot list is the **Final shot list** above; the Maker renders it during self-review — don't re-render. Pass the Maker paths and section names, not instructions to read whole files: the Refine Brief section and the decision-record IDs it cites in `report.md`, the Design Brief in `brief.md`, token rows in discovery. Add "Final" to the gallery. Check each numbered Refine item yourself against the full-res shots: done / partial / missing; check the Polish list against the states sheets and flag only what is visibly not applied. Deep: also DS&A11y and Red Team in parallel (checklist + new blockers only). Missing items or new blockers → one more Refine call with exactly those items. Never loop twice.
 
 Chat output: executive summary, `index.html` path (open it with `open` / `start` / `xdg-open` if local), report path, and: "Want me to implement the final design in this <platform> repo?" — the user decides.
 
