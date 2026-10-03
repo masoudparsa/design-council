@@ -17,6 +17,7 @@ Critique only works on something the critics can see, so the council critiques *
 - First word `quick` | `standard` | `deep` → mode. Default `standard`.
 - `--preview` or `--code` → delivery path (see Phase 0). Absent → ask.
 - First word `implement` → implement an existing preview (Path A, step A9). Optional report path; else the newest `design-council/*/report.md`.
+- First word `tweak` → a focused change to an existing final design (see **Tweak**). Optional topic folder; else the newest `design-council/*/`. Never starts a new council.
 - `--from <path>` → Product Council report or product doc, used as Product Context.
 - `--lean` → concept Makers run on sonnet (Refine and Implementer stay opus). Cheaper exploration, slightly less polished concepts; the final is unaffected.
 - No request → ask for it.
@@ -195,6 +196,28 @@ The council still explores before committing; the difference is that the only re
 Chat output: executive summary, files changed, shot paths, report path, TODOs. Do not commit.
 
 ---
+
+## Tweak — focused change to an existing design
+
+For follow-up requests on a finished design ("also show the gauge in the fertile-window state", "tighten this card", "rename this label"). The council does not reconvene.
+
+1. **Classify** (yourself, reading only `brief.md` Design Brief + `report.md` decision records):
+   - **Local** — a new state, copy, spacing, color, or a change inside one component that keeps the chosen direction.
+   - **Structural** — changes IA, flow, navigation, primary task, or contradicts a decision record.
+   Structural → stop. Say in one or two lines which decision it touches and recommend a council run (`quick` if the scope is one screen). Wait for the user. If the request is ambiguous, ask one question.
+2. **Edit:** one `design-ui-maker` call in refine mode on `final/preview.html` with a numbered Tweak Brief (exact change, affected states, viewports, themes). It edits only that part and self-reviews only the affected shots. A new state goes into the router and the gallery's `states` list.
+   If the design is already implemented in the repo, use `design-implementer` on the affected files instead (plan-approval rule from A9 step 4 applies; then run checks).
+3. **Render** only the affected shots in one job file (preview, or real screens per **Real-screen check** for implemented code).
+4. **Check:** pick by what changed —
+   - visual / data display / new state → `design-creative-director`
+   - contrast, focus, targets, tokens → `design-system-a11y`
+   - interaction, platform behavior, motion → `design-platform`
+   - wording or flow inside one screen → `design-ux-architect`
+   - trivial (copy, one spacing value) → verify yourself, no critic.
+   The critic gets the Tweak Brief, the affected full-res shots, the protocol path, and reports only `B` / `M` rows. A `B` row → one more Maker/Implementer edit with exactly that row. Never loop twice.
+5. **Record:** append to `report.md` → `## Tweaks` one line: date · change · reason (user request) · critic result.
+
+Chat output: what changed, shot paths, the critic's open rows if any. ≈ 2–3 agent calls.
 
 ## Real-screen check (implemented code)
 

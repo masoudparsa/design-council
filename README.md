@@ -128,6 +128,7 @@ Command: `/design-council`
 /design-council deep redesign the comparison page --from product-council-comparison.md
 /design-council --code settings screen for the driver app
 /design-council implement
+/design-council tweak show the cycle gauge in the fertile-window state too
 ```
 
 | Argument | Effect |
@@ -137,6 +138,7 @@ Command: `/design-council`
 | `--from <path>` | use a Product Council report or product doc as context |
 | `--lean` | cheaper exploration: concept Makers on sonnet |
 | `implement [report]` | implement an existing preview (newest report by default) |
+| `tweak <change>` | focused change to the final design: one edit, affected shots only, one relevant critic (~2–3 agent calls). Structural changes are flagged and sent back to you instead |
 
 The council never commits; it informs the human decision-maker and does not replace design ownership.
 
