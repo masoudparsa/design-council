@@ -49,15 +49,15 @@ Brief path (read the Design Brief section only), your concept brief path, output
 You get the chosen file (already copied to the output path) and a numbered Refine Brief. Apply each item with **Edit** — do not rewrite the file unless told it is a hybrid. Then raise it to **full fidelity** (remaining states, dark values in the tokens block, remaining viewports). Don't change what the brief doesn't ask for.
 
 ## Self-review (once, before replying)
-Write one job file in `<working folder>/jobs/<concept>.self.json` and render it with one browser launch:
+Render the **shot list the orchestrator gave you** — these same files go to the critics, so don't add extra shots and don't rename them. Write `<working folder>/jobs/<concept>.json` and run it with one browser launch:
 
 ```bash
-npx -y -p playwright@1 node "SKILL/templates/render.cjs" jobs/<concept>.self.json
+node "SKILL/templates/render.cjs" jobs/<concept>.json
 ```
 
-Shots (absolute `file:///` URLs; Windows `file:///C:/...`): mobile `default` (`"device": "iPhone 13"`), mobile riskiest state, desktop `default` (`"viewport": [1440, 900]`) if web is a target. In refine mode add one dark mobile shot. Output to `shots/<concept>.self.*.png`. If Chromium is missing, run `npx -y playwright@1 install chromium` once.
+Use absolute `file:///` URLs (Windows `file:///C:/...`); `"device": "iPhone 13"` for mobile, `"viewport": [1440, 900]` for desktop, the sheet URL as given. In refine mode the list also includes dark and every required state. If the script reports playwright or Chromium missing, run `node "SKILL/templates/render.cjs" --setup` once.
 
-Look at them as a senior reviewer would: hierarchy, alignment, spacing rhythm, truncation, contrast, RTL mirroring, broken layout, template tells. Fix what you find with Edit, re-render **only the shots you changed**, once. No third pass. If the render itself fails twice, stop and report it.
+Look at them as a senior reviewer would: hierarchy, alignment, spacing rhythm, truncation, contrast, RTL mirroring, broken layout, template tells. Fix what you find with Edit, re-run the job file once (one launch, a few seconds). No third pass. If the render itself fails twice, stop and report it.
 
 ## Reply
-Never paste HTML into your reply. Return only: output path · states implemented · ≤ 5 lines on key choices · known gaps. In refine mode: each Refine item → done / not done + reason.
+Never paste HTML into your reply. Return only: output path · states implemented · renderer summary (`n/n rendered`, any WARN) · ≤ 5 lines on key choices · known gaps. In refine mode: each Refine item → done / not done + reason.

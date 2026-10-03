@@ -72,7 +72,16 @@ Director, Maker, and Implementer never critique or debate.
 
 - **Fidelity tiers** — two of three concepts are discarded, so concepts are built at *concept fidelity*: real content and full visual craft, but only `default` + the riskiest state, mobile + the primary other viewport, light theme. Only the chosen direction is raised to full fidelity.
 - **Maker budget** — starts from a shared scaffold (`base.html`: tokens, state/theme router, a11y base), writes the file once, edits by Grep + Edit instead of re-reading, one self-review pass.
-- **Batch rendering** — `render.cjs` takes every screenshot in one browser launch and flags failed, blank, and JS-erroring pages, so the orchestrator opens an image only when something is wrong.
+- **Batch rendering** — `render.cjs` takes every screenshot in one browser launch (plain `node`, no `npx` per call) and flags failed, blank, and JS-erroring pages, so the orchestrator opens an image only when something is wrong.
+
+## Speed
+
+- Makers are the critical path (three in parallel; the slowest decides). Concept fidelity and the Maker budget shorten it most.
+- The Maker's self-review renders the exact shots the critics get, so there is no separate render step.
+- Debate is skipped when no dispute changes the direction or a blocker.
+- Renderer setup runs in the background while you answer the opening questions.
+- One progress line per phase, so you can see where the run is.
+- Fastest options: `quick` for one-screen work, `--lean` for exploration, `--preview` / `--code` to skip the delivery question.
 - **Narrow reads, own writes** — each Maker reads only its own concept brief; the Director writes `brief.md` and `report.md` itself instead of returning long text to be re-saved.
 - **Transport** — file paths instead of pasted content, compact issue rows, debates carry only disputed rows.
 - **`--lean`** (optional) — concept Makers on sonnet; Refine and Implementer stay on opus.
@@ -96,7 +105,7 @@ design-council/<topic>/
 ## Requirements
 
 - Claude Code
-- Node.js (for `npx playwright`). First run: `npx -y playwright@1 install chromium`
+- Node.js. The council sets up its renderer on first run (Playwright + Chromium in `~/.claude/design-council-runtime`); to do it yourself: `node skills/design-council/templates/render.cjs --setup`. To use an installed Chrome instead, set `DC_CHROMIUM` to its path.
 
 ## Installation
 

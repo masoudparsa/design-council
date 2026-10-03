@@ -1,39 +1,64 @@
 #!/usr/bin/env node
 // Design Council batch renderer: one browser launch for every screenshot.
-// Usage:  npx -y -p playwright@1 node render.cjs jobs.json
+// Setup (once per machine):  node render.cjs --setup
+//   installs playwright into ~/.claude/design-council-runtime and downloads Chromium.
+// Check:  node render.cjs --check   (exit 0 ready · 2 playwright missing · 3 Chromium missing)
+// Usage:  node render.cjs jobs.json
 // jobs.json: { "shots": [ { "url": "file:///ABS/x.html?state=default", "out": "shots/x.mobile.default.png",
 //              "device": "iPhone 13" | "viewport": [1440, 900], "fullPage": false, "dark": false } ] }
-// Relative "out" paths resolve against the jobs file's folder. Exit code 1 if any shot failed.
+// Relative "out" paths resolve against the jobs file's folder.
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const { execSync } = require('child_process');
+const RUNTIME = path.join(os.homedir(), '.claude', 'design-council-runtime');
 
-function loadPlaywright() {
+function loadPlaywright(quiet) {
+  try { return require(path.join(RUNTIME, 'node_modules', 'playwright')); } catch {}
   try { return require('playwright'); } catch {}
   for (const dir of (process.env.PATH || '').split(path.delimiter)) {
     if (!/node_modules[\\/]\.bin$/.test(dir)) continue;
     try { return require(path.join(dir, '..', 'playwright')); } catch {}
   }
-  console.error('playwright not found. Run: npx -y -p playwright@1 node render.cjs jobs.json');
+  if (quiet) return null;
+  console.error('playwright not found. Run once: node render.cjs --setup');
   process.exit(2);
 }
 
+function setup() {
+  fs.mkdirSync(RUNTIME, { recursive: true });
+  const run = cmd => execSync(cmd, { stdio: 'inherit', cwd: RUNTIME });
+  const cli = path.join(RUNTIME, 'node_modules', 'playwright', 'cli.js');
+  if (!fs.existsSync(cli)) run('npm install --no-audit --no-fund --prefix . playwright@1');
+  run(`node "${cli}" install chromium`);
+  console.log('ready: ' + RUNTIME);
+}
+
 (async () => {
+  const arg = process.argv[2];
+  if (arg === '--setup') { setup(); return; }
+  if (arg === '--check') {
+    const pw = loadPlaywright(true);
+    if (!pw) { console.log('missing: playwright (run --setup)'); process.exit(2); }
+    try { const b = await pw.chromium.launch(process.env.DC_CHROMIUM ? { executablePath: process.env.DC_CHROMIUM } : {}); await b.close(); console.log('ready'); process.exit(0); }
+    catch { console.log('missing: chromium (run --setup)'); process.exit(3); }
+  }
   const jobsPath = path.resolve(process.argv[2] || 'jobs.json');
   const base = path.dirname(jobsPath);
   const { shots = [] } = JSON.parse(fs.readFileSync(jobsPath, 'utf8'));
   const { chromium, devices } = loadPlaywright();
   let browser;
-  try { browser = await chromium.launch(); }
+  try { browser = await chromium.launch(process.env.DC_CHROMIUM ? { executablePath: process.env.DC_CHROMIUM } : {}); }
   catch (e) {
-    console.error('Chromium missing. Run once: npx -y playwright@1 install chromium\n' + e.message);
+    console.error('Chromium missing. Run once: node render.cjs --setup\n' + e.message);
     process.exit(3);
   }
   let failed = 0;
   for (const s of shots) {
     const out = path.resolve(base, s.out);
     try {
-      if (s.device && !devices[s.device]) throw new Error('unknown device ' + s.device);
       const opts = s.device ? { ...devices[s.device] } : { viewport: { width: s.viewport[0], height: s.viewport[1] } };
+      if (s.device && !devices[s.device]) throw new Error('unknown device ' + s.device);
       opts.colorScheme = s.dark ? 'dark' : 'light';
       const ctx = await browser.newContext(opts);
       const page = await ctx.newPage();

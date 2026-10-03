@@ -33,10 +33,10 @@ Allowed (no quality loss):
 4. **Refine by editing** the chosen file, not rewriting it.
 5. **Targeted HTML reading** (Grep first) for roles that need source.
 6. **Stable prompt prefix** (brief path + phase) for every member call.
-7. **Quiet orchestration.** No echoing agent output into chat.
+7. **Quiet orchestration, visible progress.** No echoing agent output into chat. At the start of each phase post exactly one line: phase · what is running · how many agents in parallel (e.g. `Make — 3 concepts in parallel; the longest step`). At the end, one line with the phase result.
 8. **Ask first** (≤ 3 questions) instead of running on a weak brief.
 9. **Fidelity tiers.** Concepts are built at *concept fidelity*; only the chosen direction is raised to *full fidelity* (see below). Two of three concepts are discarded — don't polish them.
-10. **One browser launch per render batch** (`templates/render.cjs`), not one `npx` per shot.
+10. **One browser launch per render batch** (`templates/render.cjs`, run with plain `node` — no `npx` resolution per call).
 11. **Look at images only when needed.** The renderer flags failed, blank, and JS-erroring pages; open an image yourself only when it is flagged, or when you must judge it (Synthesis input, Verify).
 12. **Each agent reads only its slice.** Concept briefs live in their own files; agents write their own outputs instead of returning long text for you to re-save.
 
@@ -102,8 +102,9 @@ Skill folder: `${CLAUDE_PLUGIN_ROOT}/skills/design-council` (plugin) or `~/.clau
 Write one job file per batch and render it with a **single browser launch**:
 
 ```bash
-npx -y playwright@1 install chromium                          # once per machine, if missing
-npx -y -p playwright@1 node "SKILL/templates/render.cjs" jobs/a.json
+node "SKILL/templates/render.cjs" --check    # 0 ready · 2/3 → run --setup
+node "SKILL/templates/render.cjs" --setup    # once per machine: playwright + Chromium into ~/.claude/design-council-runtime
+node "SKILL/templates/render.cjs" jobs/a.json
 ```
 
 ```json
@@ -116,7 +117,7 @@ npx -y -p playwright@1 node "SKILL/templates/render.cjs" jobs/a.json
 ] }
 ```
 
-`out` is relative to the job file. Full-res shots are first-viewport (not full-page); add a `fullPage` shot for flow review of long screens; `"dark": true` for dark. The script prints `ok` / `FAIL` per shot plus `WARN: page looks blank` and JS errors. Put all concepts in one job file when you render them together. Fallback if the script can't run: `npx -y playwright@1 screenshot …` per shot.
+`out` is relative to the job file. Full-res shots are first-viewport (not full-page); add a `fullPage` shot for flow review of long screens; `"dark": true` for dark. The script prints `ok` / `FAIL` per shot plus `WARN: page looks blank` and JS errors. Put all concepts in one job file when you render them together. To use an installed Chrome instead of downloading Chromium, set `DC_CHROMIUM` to its executable path. Fallback if the script can't run: `npx -y playwright@1 screenshot …` per shot.
 
 Sheet params: `src`, `state` (riskiest state), `desktop=1` or `tablet=1` (omit for mobile-only), `label`, `theme=dark`.
 
@@ -132,6 +133,8 @@ Don't open images just to pass them on: check the renderer output instead. A `FA
 ## Phase 0 — Frame (both paths)
 
 **Repo scan** (Glob/Grep only): platform (`pubspec.yaml` + flutter → Flutter · `package.json` → next / react / vue / nuxt / @angular/core / svelte / tailwindcss · `*.csproj` with Blazor/Razor → Blazor · several → note all · none → unknown); design-system paths (`ThemeData`, `ThemeExtension`, `*theme*.dart`, `tailwind.config.*`, CSS custom properties, `tokens.*`, component folders, fonts); l10n (`l10n`, `.arb`, `i18n`); for web, the dev/build scripts; for Flutter, whether a `web/` folder exists.
+
+**Renderer check** (Path A, or Path B with a web-renderable target): run `render.cjs --check`. If it isn't ready, start `--setup` in the background now so it finishes while the user answers the questions below.
 
 **`brief.md`** — Request · Product context (goal, problem, users, business goal, success metrics, constraints, scope) · Target platforms · Language & direction (Persian/Arabic/Hebrew → **RTL-first**) · Brand / visual language · Design-system paths · Content realities (data shapes, long text, empty cases) · Constraints · Unknowns.
 
@@ -153,17 +156,17 @@ Add other questions only if missing info would change the design (platform, prod
 
 **A2 Direction:** `design-director` gets the brief path + all Discovery rows (none in quick). It appends the **Design Brief** (user goal, primary task, must-haves, platform matrix, required states, riskiest state, dark mode) to `brief.md` and writes each concept brief to `concepts/<id>.brief.md`. Every pair of concepts differs on at least one structural axis derived from this problem; if not, send back once with the reason.
 
-**A3 Make:** one `design-ui-maker` call per concept, in parallel, at **concept fidelity** — brief path, its concept brief path, output path, design-system paths, skill folder path, working folder. A Maker never sees other concepts. The Maker starts from `templates/base.html`, renders, and self-reviews within its budget before returning (agent file).
+**A3 Make:** one `design-ui-maker` call per concept, in parallel, at **concept fidelity** — brief path, its concept brief path, output path, design-system paths, skill folder path, working folder. A Maker never sees other concepts. Also give each Maker its **shot list** from the "Who gets what" table (viewports, riskiest state, sheet params, file names `shots/<id>.<viewport>.<state>.png`, `sheets/<id>.png`). The Maker starts from `templates/base.html` and renders that exact set for its self-review — so its self-review shots *are* the critics' shots. It returns the renderer summary.
 
-**A4 Render** per the table above, all concepts in one job file. Concepts have only `default` + the riskiest state and no dark shots unless the brief makes dark primary. Copy `templates/gallery.html` to `index.html`, fill `CONCEPTS`.
+**A4 Collect** — no re-render. Check each Maker's renderer summary; re-render only shots that are missing, `FAIL`, blank, or erroring (open those images yourself). Concepts have only `default` + the riskiest state and no dark shots unless the brief makes dark primary. Copy `templates/gallery.html` to `index.html`, fill `CONCEPTS`.
 
 **A5 Critique:** critics in parallel — brief path, their images, concept HTML paths, their Discovery rows, `critique-protocol.md` path. Tell them the concepts are at concept fidelity. If Discovery showed broad agreement, tell Red Team to attack the consensus and ask everyone what the council is collectively missing. Then build your **index**: rankings per member, blockers/majors per concept, disputes, borrow proposals.
 
-**A6 Debate:** disputes that change the direction or a blocker, most critical first. Each side gets its disputed rows, the opposing rows, the protocol path. One reply per round; stop on concession or "needs evidence X" → open question / usability test. All disputes in one parallel message.
+**A6 Debate:** only when a dispute would change the chosen direction or resolve a blocker. **No qualifying dispute → skip this phase entirely** (one progress line: "no debate needed") and go to A7; minor disagreements go to the Director as rows. Otherwise: disputes most critical first. Each side gets its disputed rows, the opposing rows, the protocol path. One reply per round; stop on concession or "needs evidence X" → open question / usability test. All disputes in one parallel message.
 
 **A7 Synthesis:** `design-director` gets brief path, images, all critique and debate rows verbatim (labeled by role), your index, `templates/design-report.md` path, and the `report.md` path to write. It writes the report itself and returns only a short summary. The report holds the chosen direction (concept or explicit hybrid), decision records, blocker resolutions, stress test (same call), and a numbered **Refine Brief** tied to issue IDs. The Refine Brief must also list what full fidelity adds: remaining states, dark mode, remaining viewports.
 
-**A8 Refine + Verify:** copy the chosen concept to `final/preview.html`; `design-ui-maker` in refine mode applies the Refine Brief by editing (rewrite only for a hybrid), raises it to **full fidelity**, and self-reviews. Render it (full-res for every viewport and state, dark, + sheet) in one job file, add "Final" to the gallery. Check each Refine item yourself against the full-res shots: done / partial / missing. Deep: also DS&A11y and Red Team in parallel (checklist + new blockers only). Missing items or new blockers → one more Refine call with exactly those items. Never loop twice.
+**A8 Refine + Verify:** copy the chosen concept to `final/preview.html`; `design-ui-maker` in refine mode applies the Refine Brief by editing (rewrite only for a hybrid), raises it to **full fidelity**, and self-reviews. Its shot list is the full final set (full-res for every viewport and state, dark, + sheet); the Maker renders it during self-review — don't re-render. Add "Final" to the gallery. Check each Refine item yourself against the full-res shots: done / partial / missing. Deep: also DS&A11y and Red Team in parallel (checklist + new blockers only). Missing items or new blockers → one more Refine call with exactly those items. Never loop twice.
 
 Chat output: executive summary, `index.html` path (open it with `open` / `start` / `xdg-open` if local), report path, and: "Want me to implement the final design in this <platform> repo?" — the user decides.
 
@@ -207,7 +210,7 @@ For follow-up requests on a finished design ("also show the gauge in the fertile
    Structural → stop. Say in one or two lines which decision it touches and recommend a council run (`quick` if the scope is one screen). Wait for the user. If the request is ambiguous, ask one question.
 2. **Edit:** one `design-ui-maker` call in refine mode on `final/preview.html` with a numbered Tweak Brief (exact change, affected states, viewports, themes). It edits only that part and self-reviews only the affected shots. A new state goes into the router and the gallery's `states` list.
    If the design is already implemented in the repo, use `design-implementer` on the affected files instead (plan-approval rule from A9 step 4 applies; then run checks).
-3. **Render** only the affected shots in one job file (preview, or real screens per **Real-screen check** for implemented code).
+3. **Render** — the Maker's shot list is only the affected shots (it renders them in self-review) (preview, or real screens per **Real-screen check** for implemented code).
 4. **Check:** pick by what changed —
    - visual / data display / new state → `design-creative-director`
    - contrast, focus, targets, tokens → `design-system-a11y`
