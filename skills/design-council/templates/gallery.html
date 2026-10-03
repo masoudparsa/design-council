@@ -1,0 +1,77 @@
+<!doctype html>
+<!-- Design Council gallery. The orchestrator fills CONCEPTS; files are relative to this index.html. -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design Council — Preview</title>
+<style>
+  :root { color-scheme: light dark; --bg:#f4f5f7; --fg:#1b1e22; --mut:#5d6570; --line:#d6dae0; --chip:#fff; --acc:#2d5bff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#131518; --fg:#e8eaed; --mut:#9aa3ad; --line:#2c3138; --chip:#1c1f24; --acc:#7d9bff; } }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--fg); font: 14px/1.45 system-ui, sans-serif; }
+  header { padding: 16px 20px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  h1 { font-size: 16px; margin-inline-end: 12px; }
+  button, select, a.btn { font: inherit; color: var(--fg); background: var(--chip); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer; text-decoration: none; }
+  button[aria-pressed="true"] { border-color: var(--acc); color: var(--acc); font-weight: 600; }
+  button:focus-visible, select:focus-visible, a.btn:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+  .bar { padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .thesis { padding: 0 20px 8px; color: var(--mut); max-width: 900px; }
+  .stage { padding: 12px 20px 32px; }
+  .frame { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #fff; margin-inline: auto; }
+  iframe { border: 0; display: block; transform-origin: 0 0; }
+  .spacer { flex: 1; }
+  #tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+</style></head>
+<body>
+<header><h1>Design Council</h1><div id="tabs" role="tablist"></div></header>
+<p class="thesis" id="thesis"></p>
+<div class="bar">
+  <button data-dev="mobile">Mobile</button><button data-dev="tablet">Tablet</button><button data-dev="desktop">Desktop</button>
+  <select id="state" aria-label="State"></select>
+  <button id="theme" aria-pressed="false">Dark</button>
+  <span class="spacer"></span>
+  <a class="btn" id="open" target="_blank" rel="noopener">Open full page</a>
+</div>
+<div class="stage" id="stage"><div class="frame" id="frame"><iframe id="view" title="Design preview"></iframe></div></div>
+<script>
+  // Filled by the orchestrator:
+  const CONCEPTS = [
+    { id: 'a', name: 'Concept A', thesis: 'Structural thesis…', file: 'concepts/concept-a.html', states: ['default', 'empty', 'error'] },
+    { id: 'final', name: 'Final', thesis: 'Chosen direction…', file: 'final/preview.html', states: ['default'] }
+  ];
+  const DEV = { mobile: [390, 844], tablet: [834, 1112], desktop: [1440, 900] };
+  let cur = CONCEPTS[CONCEPTS.length - 1], dev = 'mobile', dark = false;
+  const $ = id => document.getElementById(id);
+
+  CONCEPTS.forEach(c => {
+    const b = document.createElement('button');
+    b.textContent = c.name; b.setAttribute('role', 'tab');
+    b.onclick = () => { cur = c; render(); };
+    c.btn = b; $('tabs').appendChild(b);
+  });
+  document.querySelectorAll('[data-dev]').forEach(b => b.onclick = () => { dev = b.dataset.dev; render(); });
+  $('theme').onclick = () => { dark = !dark; render(); };
+  $('state').onchange = render;
+  addEventListener('resize', fit);
+
+  function render() {
+    CONCEPTS.forEach(c => c.btn.setAttribute('aria-pressed', c === cur));
+    document.querySelectorAll('[data-dev]').forEach(b => b.setAttribute('aria-pressed', b.dataset.dev === dev));
+    $('theme').setAttribute('aria-pressed', dark);
+    $('thesis').textContent = cur.thesis;
+    const sel = $('state'), keep = sel.value;
+    sel.innerHTML = cur.states.map(s => `<option>${s}</option>`).join('');
+    sel.value = cur.states.includes(keep) ? keep : cur.states[0];
+    const url = `${cur.file}?state=${encodeURIComponent(sel.value)}${dark ? '&theme=dark' : ''}`;
+    if ($('view').getAttribute('src') !== url) $('view').src = url;
+    $('open').href = url;
+    fit();
+  }
+  function fit() {
+    const [w, h] = DEV[dev];
+    const s = Math.min(1, ($('stage').clientWidth - 40) / w, (innerHeight - 190) / h);
+    Object.assign($('view'), { width: w, height: h });
+    $('view').style.transform = `scale(${s})`;
+    Object.assign($('frame').style, { width: w * s + 'px', height: h * s + 'px' });
+  }
+  render();
+</script>
+</body></html>
